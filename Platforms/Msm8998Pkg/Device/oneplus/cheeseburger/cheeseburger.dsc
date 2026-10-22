@@ -27,6 +27,7 @@
 
 [Components]
   MdeModulePkg/Universal/SerialDxe/SerialDxe.inf
+  Platforms/Msm8998Pkg/Device/oneplus/cheeseburger/Applications/CheeseburgerInfo/CheeseburgerInfo.inf
   UniXNUPkg/Application/UniXNU/UniXNU.inf
   UniXNUPkg/Driver/UniXNUDxe/UniXNUDxe.inf
   DarwinBootPkg/Driver/DarwinBoot.inf

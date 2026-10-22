@@ -1,0 +1,36 @@
+## @file
+#  Print the board facts the B1 device test has to confirm.
+#
+#  Built into this platform's components but not listed in the FDF: UniXNU
+#  launches it from the payload ESP so the firmware under test stays fixed.
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION    = 0x00010005
+  BASE_NAME      = CheeseburgerInfo
+  FILE_GUID      = 6C5B9E2F-0D44-4C1E-9B6A-2E7C42F1B0D3
+  MODULE_TYPE    = UEFI_APPLICATION
+  VERSION_STRING = 1.0
+  ENTRY_POINT    = CheeseburgerInfoEntry
+
+[Sources]
+  CheeseburgerInfo.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  MemoryAllocationLib
+  PrintLib
+  UefiApplicationEntryPoint
+  UefiBootServicesTableLib
+  UefiLib
+
+[Protocols]
+  gEfiBlockIoProtocolGuid
+  gEfiGraphicsOutputProtocolGuid
