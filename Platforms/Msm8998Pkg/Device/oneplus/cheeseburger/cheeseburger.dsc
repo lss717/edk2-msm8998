@@ -26,6 +26,7 @@
   UniXNULib|UniXNUPkg/Library/UniXNULib/UniXNULib.inf
 
 [Components]
+  MdeModulePkg/Universal/SerialDxe/SerialDxe.inf
   UniXNUPkg/Application/UniXNU/UniXNU.inf
   UniXNUPkg/Driver/UniXNUDxe/UniXNUDxe.inf
   DarwinBootPkg/Driver/DarwinBoot.inf

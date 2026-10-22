@@ -130,6 +130,12 @@ READ_LOCK_STATUS   = TRUE
     INF MdeModulePkg/Universal/Console/GraphicsConsoleDxe/GraphicsConsoleDxe.inf
     INF MdeModulePkg/Universal/Console/TerminalDxe/TerminalDxe.inf
 
+    #
+    # SerialIo on the frame buffer.  The family DSC only includes SerialDxe for
+    # non-release builds, but UniXNU writes its log through SerialIo and this
+    # board has no working UART in the UEFI image, so keep it in release too.
+    #
+    INF MdeModulePkg/Universal/SerialDxe/SerialDxe.inf
 
     INF ArmPkg/Drivers/ArmGic/ArmGicDxe.inf
     INF ArmPkg/Drivers/TimerDxe/TimerDxe.inf
@@ -223,7 +229,8 @@ READ_LOCK_STATUS   = TRUE
     INF ShellPkg/DynamicCommand/TftpDynamicCommand/TftpDynamicCommand.inf
 !endif #$(INCLUDE_TFTP_COMMAND)
 
-    INF Platforms/Msm8998FamilyPkg/LinuxSimpleMassStorage/LinuxSimpleMassStorage.inf
+    # LinuxSimpleMassStorage embeds a 6.9 MiB Linux image.  The B line boots
+    # UniXNU/DarwinBoot, so drop it and keep the space for the boot stack.
 
     #
     # Bds
