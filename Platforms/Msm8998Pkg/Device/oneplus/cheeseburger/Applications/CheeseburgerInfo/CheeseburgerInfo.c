@@ -28,6 +28,7 @@ STATIC UINT32   mGopWidth;
 STATIC UINT32   mGopHeight;
 STATIC UINT32   mGopStride;
 STATIC UINT64   mGopBase;
+STATIC BOOLEAN  mLoaderPresent;
 STATIC BOOLEAN  mUserdataFound;
 STATIC UINT64   mUserdataFirst;
 STATIC UINT64   mUserdataLast;
@@ -231,6 +232,21 @@ PrintGpt (
 
 STATIC
 VOID
+PrintLoader (
+  VOID
+  )
+{
+  EFI_STATUS  Status;
+  VOID        *Loader;
+  EFI_GUID    LoaderGuid = { 0x0f0a492e, 0x5a6a, 0x49f6, { 0xa1, 0xbf, 0x74, 0x3c, 0x87, 0xab, 0x1c, 0xfe } };
+
+  Status = gBS->LocateProtocol (&LoaderGuid, NULL, &Loader);
+  mLoaderPresent = !EFI_ERROR (Status);
+  Print (L"LOADER: DarwinBoot UniXNULoader protocol %r\r\n", Status);
+}
+
+STATIC
+VOID
 PrintDisks (
   VOID
   )
@@ -288,11 +304,13 @@ CheeseburgerInfoEntry (
   Print (L"-----------------\r\n");
   PrintMemory ();
   PrintGop ();
+  PrintLoader ();
   PrintDisks ();
   Print (L"-----------------\r\n");
   Print (L"SUMMARY\r\n");
   Print (L"  RAM %lu MiB, GOP %ux%u stride %u base 0x%lx\r\n",
          mRamMiB, mGopWidth, mGopHeight, mGopStride, mGopBase);
+  Print (L"  DarwinBoot loader %a\r\n", mLoaderPresent ? "present" : "MISSING");
   if (mUserdataFound) {
     Print (L"  userdata first 0x%lx last 0x%lx, block %u bytes\r\n",
            mUserdataFirst, mUserdataLast, mUserdataBlockSize);
