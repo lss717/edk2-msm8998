@@ -235,12 +235,15 @@ READ_LOCK_STATUS   = TRUE
     INF MdeModulePkg/Universal/DriverHealthManagerDxe/DriverHealthManagerDxe.inf
     INF MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
     INF MdeModulePkg/Application/UiApp/UiApp.inf
-    INF Platforms/Msm8998FamilyPkg/Drivers/LogoDxe/LogoDxe.inf
 
   #
-  # Simple Init GUI
+  # UniXNU boot manager and Darwin loader
   #
-  INF src/main/SimpleInitMain.inf
+  INF Platforms/Msm8998Pkg/Device/oneplus/cheeseburger/Drivers/CheeseburgerBootMemoryDxe/CheeseburgerBootMemoryDxe.inf
+  INF UniXNUPkg/Application/UniXNU/UniXNU.inf
+  INF UniXNUPkg/Driver/UniXNUDxe/UniXNUDxe.inf
+  INF DarwinBootPkg/Driver/DarwinBoot.inf
+
   // Boom
   # INF src/kernelfdt/KernelFdtDxe.inf
 

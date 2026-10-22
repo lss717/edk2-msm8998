@@ -21,3 +21,12 @@
   gMSM8998PkgTokenSpaceGuid.PcdDeviceVendor|"Oneplus"
   gMSM8998PkgTokenSpaceGuid.PcdDeviceProduct|"5"
   gMSM8998PkgTokenSpaceGuid.PcdDeviceCodeName|"cheeseburger"
+
+[LibraryClasses]
+  UniXNULib|UniXNUPkg/Library/UniXNULib/UniXNULib.inf
+
+[Components]
+  UniXNUPkg/Application/UniXNU/UniXNU.inf
+  UniXNUPkg/Driver/UniXNUDxe/UniXNUDxe.inf
+  DarwinBootPkg/Driver/DarwinBoot.inf
+  Platforms/Msm8998Pkg/Device/oneplus/cheeseburger/Drivers/CheeseburgerBootMemoryDxe/CheeseburgerBootMemoryDxe.inf
