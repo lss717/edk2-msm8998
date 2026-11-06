@@ -230,6 +230,40 @@ CheeseburgerPrintGic (
     );
 }
 
+STATIC EFI_EVENT  mGicTimer;
+
+STATIC
+VOID
+EFIAPI
+CheeseburgerGicTimer (
+  IN EFI_EVENT  Event,
+  IN VOID       *Context
+  )
+{
+  CheeseburgerPrintGic (L"loop");
+}
+
+STATIC
+VOID
+CheeseburgerStartGicTimer (
+  VOID
+  )
+{
+  EFI_STATUS  Status;
+
+  Status = gBS->CreateEvent (EVT_TIMER, TPL_CALLBACK, CheeseburgerGicTimer, NULL, &mGicTimer);
+  if (EFI_ERROR (Status)) {
+    Print (L"UNIXNU-GIC: timer event failed %r\n", Status);
+    return;
+  }
+  // 1 s in 100 ns units: keeps the newest UNIXNU-GIC line at the bottom of the
+  // screen, so a photo always captures it even after the console scrolls.
+  Status = gBS->SetTimer (mGicTimer, TimerPeriodic, 10 * 1000 * 1000);
+  if (EFI_ERROR (Status)) {
+    Print (L"UNIXNU-GIC: timer start failed %r\n", Status);
+  }
+}
+
 STATIC
 VOID
 EFIAPI
@@ -274,6 +308,7 @@ CheeseburgerBootMemoryDxeEntry (
 
   CheeseburgerPrintGic (L"entry");
   CheeseburgerInstallGicExitEvent ();
+  CheeseburgerStartGicTimer ();
 
   Dtb = *(EFI_PHYSICAL_ADDRESS *)(UINTN)CHEESEBURGER_DTB_STORE;
   if ((Dtb == 0) || ((Dtb & 3) != 0) || (fdt_check_header ((VOID *)(UINTN)Dtb) != 0)) {
