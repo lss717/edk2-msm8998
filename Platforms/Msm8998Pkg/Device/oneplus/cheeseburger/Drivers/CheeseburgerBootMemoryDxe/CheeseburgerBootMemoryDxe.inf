@@ -27,7 +27,12 @@
   MemoryAllocationLib
   UefiBootServicesTableLib
   UefiDriverEntryPoint
+  UefiLib
+  IoLib
   FdtLib
+
+[Guids]
+  gEfiEventExitBootServicesGuid
 
 [Protocols]
   gEfiBlockIoProtocolGuid                       ## PRODUCES
