@@ -1,8 +1,8 @@
 diff --git a/ArmPkg/Drivers/ArmGic/GicV3/ArmGicV3Dxe.c b/ArmPkg/Drivers/ArmGic/GicV3/ArmGicV3Dxe.c
-index b1f0cd48c7..f6d4a6227e 100644
+index b1f0cd48c7..0cea0bb8cf 100644
 --- a/ArmPkg/Drivers/ArmGic/GicV3/ArmGicV3Dxe.c
 +++ b/ArmPkg/Drivers/ArmGic/GicV3/ArmGicV3Dxe.c
-@@ -1,488 +1,515 @@
+@@ -1,488 +1,510 @@
 -/** @file
 -*
 -*  Copyright (c) 2011-2018, ARM Limited. All rights reserved.
@@ -899,11 +899,6 @@ index b1f0cd48c7..f6d4a6227e 100644
 +    MmioRead32 (mGicRedistributorsBase + ARM_GICR_CTLR_FRAME_SIZE + 0x280) /* ICPENDR0 */,
 +    MmioRead32 (mGicRedistributorsBase + 0x014) /* GICR_WAKER */
 +    );
-+  //
-+  // H126b: keep the line on screen long enough to photograph. The console may
-+  // not be up this early; if it is, this is the earliest GIC state of the boot.
-+  //
-+  gBS->Stall (10000000);
 +
 +  // We will be driving this GIC in native v3 mode, i.e., with Affinity
 +  // Routing enabled. So ensure that the ARE bit is set.
