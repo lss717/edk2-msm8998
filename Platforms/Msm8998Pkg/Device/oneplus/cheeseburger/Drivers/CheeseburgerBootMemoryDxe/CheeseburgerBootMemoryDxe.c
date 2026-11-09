@@ -196,73 +196,6 @@ PublishInitrd (
   DEBUG ((DEBUG_ERROR, "CHEESEBURGER: initrd block device 0x%lx size 0x%lx %r\n", Start, End - Start, Status));
 }
 
-//
-// UNIXNU H126 diagnostic: read-only GIC snapshot at two points of the UEFI
-// boot. XNU later sees GICD_CTLR.DS=0 and GICR_IGROUPR0=0 (all SGIs/PPIs owned
-// by the secure state), while a Linux/TWRP boot receives a usable timer PPI.
-// Printing here shows whether the state handed to UEFI already has it, and
-// whether anything in edk2/DXE changes it before the handoff.
-//
-#define CHEESEBURGER_GIC_DIST  0x17A00000ULL
-#define CHEESEBURGER_GIC_REDIST 0x17B00000ULL
-
-STATIC
-VOID
-CheeseburgerPrintGic (
-  IN CONST CHAR16  *Tag
-  )
-{
-  UINT32  Ctlr;
-
-  Ctlr = MmioRead32 ((UINTN)CHEESEBURGER_GIC_DIST + 0x0000);
-  Print (
-    L"UNIXNU-GIC-%s: CTLR=%08x DS=%d ARE=%d TYPER=%08x%08x IGROUPR0=%08x ISENABLER0=%08x ISPENDR0=%08x WAKER=%08x\n",
-    Tag,
-    Ctlr,
-    (Ctlr >> 6) & 1,
-    (Ctlr >> 4) & 1,
-    MmioRead32 ((UINTN)CHEESEBURGER_GIC_REDIST + 0x0C),
-    MmioRead32 ((UINTN)CHEESEBURGER_GIC_REDIST + 0x08),
-    MmioRead32 ((UINTN)CHEESEBURGER_GIC_REDIST + 0x10080),
-    MmioRead32 ((UINTN)CHEESEBURGER_GIC_REDIST + 0x10100),
-    MmioRead32 ((UINTN)CHEESEBURGER_GIC_REDIST + 0x10280),
-    MmioRead32 ((UINTN)CHEESEBURGER_GIC_REDIST + 0x0014)
-    );
-}
-
-STATIC
-VOID
-EFIAPI
-CheeseburgerGicExitBootServices (
-  IN EFI_EVENT  Event,
-  IN VOID       *Context
-  )
-{
-  CheeseburgerPrintGic (L"exit");
-}
-
-STATIC
-VOID
-CheeseburgerInstallGicExitEvent (
-  VOID
-  )
-{
-  EFI_EVENT  Event;
-  EFI_STATUS Status;
-
-  Status = gBS->CreateEventEx (
-                  EVT_NOTIFY_SIGNAL,
-                  TPL_CALLBACK,
-                  CheeseburgerGicExitBootServices,
-                  NULL,
-                  &gEfiEventExitBootServicesGuid,
-                  &Event
-                  );
-  if (EFI_ERROR (Status)) {
-    Print (L"UNIXNU-GIC: exit event failed %r\n", Status);
-  }
-}
-
 EFI_STATUS
 EFIAPI
 CheeseburgerBootMemoryDxeEntry (
@@ -271,9 +204,6 @@ CheeseburgerBootMemoryDxeEntry (
   )
 {
   EFI_PHYSICAL_ADDRESS  Dtb;
-
-  CheeseburgerPrintGic (L"entry");
-  CheeseburgerInstallGicExitEvent ();
 
   Dtb = *(EFI_PHYSICAL_ADDRESS *)(UINTN)CHEESEBURGER_DTB_STORE;
   if ((Dtb == 0) || ((Dtb & 3) != 0) || (fdt_check_header ((VOID *)(UINTN)Dtb) != 0)) {
