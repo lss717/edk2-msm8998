@@ -52,11 +52,11 @@ function _apply_patch(){
 	patches="$(cd "${patches}"&&pwd)"||return "$?"
 	for patch in "${patches}"/*.patch
 	do	[ -f "${patch}" ]||continue
-		if git -C "${tree}" apply --reverse --check "${patch}" >/dev/null 2>&1
+		if git -C "${tree}" apply --reverse --check --ignore-space-change "${patch}" >/dev/null 2>&1
 		then	continue
 		fi
-		git -C "${tree}" apply --check "${patch}"||return "$?"
-		git -C "${tree}" apply "${patch}"||return "$?"
+		git -C "${tree}" apply --check --ignore-space-change "${patch}"||return "$?"
+		git -C "${tree}" apply --ignore-space-change "${patch}"||return "$?"
 	done
 }
 
