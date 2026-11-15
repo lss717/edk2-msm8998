@@ -36,6 +36,15 @@ function _help(){
 
 function _error(){ echo "${@}" >&2;exit 1; }
 
+function _nproc(){
+	if command -v nproc >/dev/null 2>&1
+	then nproc
+	elif command -v sysctl >/dev/null 2>&1
+	then sysctl -n hw.ncpu
+	else echo 1
+	fi
+}
+
 function _apply_patch(){
 	local tree="${1}"
 	local patches="${2}"
@@ -61,7 +70,7 @@ function _build(){
 	source "${_EDK2}/edksetup.sh"
 	[ -d "${WORKSPACE}" ]||mkdir "${WORKSPACE}"
 	set -x
-	make -C "${_EDK2}/BaseTools" -j "$(nproc)"||exit "$?"
+	make -C "${_EDK2}/BaseTools" -j "$(_nproc)"||exit "$?"
 	# based on the instructions from edk2-platform
 	rm -f "${OUTDIR}/boot-${DEVICE}.img" uefi_img "uefi-${DEVICE}.img.gz" "uefi-${DEVICE}.img.gz-dtb"
 	case "${MODE}" in
