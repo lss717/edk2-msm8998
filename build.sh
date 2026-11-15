@@ -218,6 +218,19 @@ done
 [ -n "${_EDK2}" ]||_error "EDK2 not found, please see README.md"
 [ -n "${_EDK2_PLATFORMS}" ]||_error "EDK2 Platforms not found, please see README.md"
 [ -n "${_SIMPLE_INIT}" ]||_error "SimpleInit not found, please see README.md"
+DIAG_EXCEPTION_PATCH="${PWD}/Patches/h237-exception-context.patch"
+if [ -f "${DIAG_EXCEPTION_PATCH}" ]
+then
+	if git -C "${_EDK2}" apply --reverse --check "${DIAG_EXCEPTION_PATCH}" 2>/dev/null
+	then
+		echo "Diagnostic exception context patch already applied"
+	elif git -C "${_EDK2}" apply --check "${DIAG_EXCEPTION_PATCH}"
+	then
+		git -C "${_EDK2}" apply "${DIAG_EXCEPTION_PATCH}"
+	else
+		_error "cannot apply diagnostic exception context patch"
+	fi
+fi
 echo "EDK2 Path: ${_EDK2}"
 echo "EDK2_PLATFORMS Path: ${_EDK2_PLATFORMS}"
 export CROSS_COMPILE="${CROSS_COMPILE:-aarch64-linux-gnu-}"

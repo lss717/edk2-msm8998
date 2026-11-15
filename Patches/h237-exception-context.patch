@@ -1,0 +1,53 @@
+--- a/Common/edk2/ArmPkg/Library/DefaultExceptionHandlerLib/AArch64/DefaultExceptionHandler.c
++++ b/Common/edk2/ArmPkg/Library/DefaultExceptionHandlerLib/AArch64/DefaultExceptionHandler.c
+@@ -188,9 +188,12 @@
+   IN OUT EFI_SYSTEM_CONTEXT  SystemContext
+   )
+ {
+-  CHAR8  Buffer[100];
++  CHAR8  Buffer[320];
+   UINTN  CharCount;
+   INT32  Offset;
++  UINTN  ImageBase;
++  UINTN  HeaderSize;
++  CHAR8  *ImageName;
+ 
+   if (mRecursiveException) {
+     STATIC CHAR8 CONST  Message[] = "\nRecursive exception occurred while dumping the CPU state\n";
+@@ -209,6 +212,36 @@
+   SerialPortWrite ((UINT8 *)Buffer, CharCount);
+   if (gST->ConOut != NULL) {
+     AsciiPrint (Buffer);
++  }
++
++  ImageBase  = 0;
++  HeaderSize = 0;
++  ImageName  = GetImageName (
++                 SystemContext.SystemContextAArch64->ELR,
++                 &ImageBase,
++                 &HeaderSize
++                 );
++  CharCount = AsciiSPrint (
++                Buffer,
++                sizeof (Buffer),
++                "EXC ELR=0x%016lx ESR=0x%016lx FAR=0x%016lx SPSR=0x%016lx\n"
++                "EXC LR=0x%016lx SP=0x%016lx FP=0x%016lx\n"
++                "EXC IMG=%a BASE=0x%016lx OFF=0x%016lx HDR=0x%lx\n",
++                SystemContext.SystemContextAArch64->ELR,
++                SystemContext.SystemContextAArch64->ESR,
++                SystemContext.SystemContextAArch64->FAR,
++                SystemContext.SystemContextAArch64->SPSR,
++                SystemContext.SystemContextAArch64->LR,
++                SystemContext.SystemContextAArch64->SP,
++                SystemContext.SystemContextAArch64->FP,
++                (ImageName != NULL) ? ImageName : "(not in loaded PE)",
++                (UINT64)ImageBase,
++                (UINT64)(SystemContext.SystemContextAArch64->ELR - ImageBase),
++                (UINT64)HeaderSize
++                );
++  SerialPortWrite ((UINT8 *)Buffer, CharCount);
++  if (gST->ConOut != NULL) {
++    AsciiPrint (Buffer);
+   }
+ 
+   DEBUG_CODE_BEGIN ();
