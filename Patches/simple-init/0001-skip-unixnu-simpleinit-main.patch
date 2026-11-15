@@ -1,0 +1,11 @@
+diff --git a/SimpleInit.inc b/SimpleInit.inc
+index c2468b2d..b64888a6 100644
+--- a/SimpleInit.inc
++++ b/SimpleInit.inc
+@@ -57,5 +57,5 @@
+   src/loggerd/SimpleInitLoggerd.inf
+   src/confd/SimpleInitConfd.inf
+   src/SimpleInitRootFS.inf
+-  src/main/SimpleInitMain.inf
++  # UniXNU boots Darwin; SimpleInitMain is not in the cheeseburger FDF.
+   src/kernelfdt/KernelFdtDxe.inf

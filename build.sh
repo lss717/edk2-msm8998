@@ -36,9 +36,28 @@ function _help(){
 
 function _error(){ echo "${@}" >&2;exit 1; }
 
+function _apply_patch(){
+	local tree="${1}"
+	local patches="${2}"
+	[ -d "${tree}" ]&&[ -d "${patches}" ]||return 0
+	patches="$(cd "${patches}"&&pwd)"||return "$?"
+	for patch in "${patches}"/*.patch
+	do	[ -f "${patch}" ]||continue
+		if git -C "${tree}" apply --reverse --check "${patch}" >/dev/null 2>&1
+		then	continue
+		fi
+		git -C "${tree}" apply --check "${patch}"||return "$?"
+		git -C "${tree}" apply "${patch}"||return "$?"
+	done
+}
+
 function _build(){
 	local DEVICE="${1}"
 	shift
+	_apply_patch Common/edk2 Patches/edk2||return "$?"
+	_apply_patch GPLDrivers/Library/simple-init Patches/simple-init||return "$?"
+	[ -z "${UNIXNU_TREE}" ]||_apply_patch "${UNIXNU_TREE}/drivers/DarwinBoot" Patches/darwinboot||return "$?"
+	cp "${_EDK2}/BaseTools/Conf/tools_def.template" "${_EDK2}/Conf/tools_def.txt"||return "$?"
 	source "${_EDK2}/edksetup.sh"
 	[ -d "${WORKSPACE}" ]||mkdir "${WORKSPACE}"
 	set -x
@@ -60,12 +79,12 @@ function _build(){
 		-s \
 		-n 0 \
 		-a AARCH64 \
-		-t GCC5 \
+		-t CLANG38 \
 		-p "${DSC_FILE}" \
 		-b "${_MODE}" \
 		||return "$?"
 	gzip -c \
-		< "workspace/Build/${DEVICE}/${_MODE}_GCC5/FV/MSM8998PKG_UEFI.fd" \
+		< "workspace/Build/${DEVICE}/${_MODE}_CLANG38/FV/MSM8998PKG_UEFI.fd" \
 		> "workspace/uefi-${DEVICE}.img.gz" \
 		||return "$?"
 	cat \
@@ -94,8 +113,6 @@ function _distclean(){ if [ -d .git ];then git clean -xdf;else _clean;fi; }
 
 cd "$(dirname "$0")"||exit 1
 [ -f Platforms/Msm8998Pkg/Msm8998.dsc ]||_error "cannot find Platforms/Msm8998Pkg/Msm8998.dsc"
-typeset -l DEVICE
-typeset -u MODE
 DEVICE=""
 MODE=RELEASE
 CHINESE=false
@@ -104,27 +121,28 @@ DISTCLEAN=false
 export OUTDIR="${PWD}"
 export GEN_ACPI=false
 export GEN_ROOTFS=true
-OPTS="$(getopt -o d:hacACDO:r: -l device:,help,all,chinese,acpi,skip-rootfs-gen,clean,distclean,outputdir:,release: -n 'build.sh' -- "$@")"||exit 1
-eval set -- "${OPTS}"
-while true
-do	case "${1}" in
-		-d|--device)DEVICE="${2}";shift 2;;
+while [ $# -gt 0 ]; do
+	case "${1}" in
+		-d|--device)DEVICE="${2:-}";shift 2;;
 		-a|--all)DEVICE=all;shift;;
 		-c|--chinese)CHINESE=true;shift;;
 		-A|--acpi)GEN_ACPI=true;shift;;
 		-C|--clean)CLEAN=true;shift;;
 		-D|--distclean)DISTCLEAN=true;shift;;
-		-O|--outputdir)OUTDIR="${2}";shift 2;;
+		-O|--outputdir)OUTDIR="${2:-}";shift 2;;
 		--skip-rootfs-gen)GEN_ROOTFS=false;shift;;
-		-r|--release)MODE="${2}";shift 2;;
-		-h|--help)_help 0;shift;;
-		--)shift;break;;
+		-r|--release)MODE="${2:-}";shift 2;;
+		-h|--help)_help 0;;
+		--)_help 1;;
 		*)_help 1;;
 	esac
 done
+
 if "${DISTCLEAN}";then _distclean;exit "$?";fi
 if "${CLEAN}";then _clean;exit "$?";fi
 [ -z "${DEVICE}" ]&&_help 1
+DEVICE="$(printf "%s" "${DEVICE}" | tr "[:upper:]" "[:lower:]")"
+MODE="$(printf "%s" "${MODE}" | tr "[:lower:]" "[:upper:]")"
 if ! [ -f Common/edk2/edksetup.sh ] || ! [ -f ../edk2/edksetup.sh ]
 then	set -e
 	echo "Updating submodules"
@@ -203,6 +221,8 @@ export GITCOMMIT
 echo > ramdisk
 set -e
 
+if "${GEN_ROOTFS}"
+then
 mkdir -p "${_SIMPLE_INIT}/build" "${_SIMPLE_INIT}/root/usr/share/locale"
 for i in "${_SIMPLE_INIT}/po/"*.po
 do	[ -f "${i}" ]||continue
@@ -211,10 +231,41 @@ do	[ -f "${i}" ]||continue
 	mkdir -p "${_path}"
 	msgfmt -o "${_path}/simple-init.mo" "${i}"
 done
-if "${GEN_ROOTFS}"
-then bash "${_SIMPLE_INIT}/scripts/gen-rootfs-source.sh" \
+bash "${_SIMPLE_INIT}/scripts/gen-rootfs-source.sh" \
 	"${_SIMPLE_INIT}" \
 	"${_SIMPLE_INIT}/build"
+else
+_rootfs_build="${_SIMPLE_INIT}/build"
+mkdir -p "${_rootfs_build}"
+cat > "${_rootfs_build}/rootfs.c" <<'EOF'
+#include <sys/stat.h>
+#include "assets.h"
+
+entry_dir assets_rootfs = {
+	.info.name = "",
+	.info.mode = S_IFDIR | 0755,
+	.subdirs = NULL,
+	.subfiles = NULL,
+};
+EOF
+cat > "${_rootfs_build}/rootfs_data.S" <<'EOF'
+.section .rodata
+.balign 8
+.globl _binary_rootfs_bin_start
+.globl _binary_rootfs_bin_end
+.globl _binary_rootfs_bin_size
+_binary_rootfs_bin_start:
+.byte 0
+_binary_rootfs_bin_end:
+.balign 8
+_binary_rootfs_bin_size:
+.quad 0
+EOF
+_rootfs_clang="${CLANG_BIN:+${CLANG_BIN%/}/clang}"
+"${_rootfs_clang:-$(command -v clang)}" \
+	--target=aarch64-linux-gnu \
+	-c "${_rootfs_build}/rootfs_data.S" \
+	-o "${_rootfs_build}/rootfs_data.o"
 fi
 
 if [ "${DEVICE}" == "all" ]
